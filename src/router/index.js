@@ -15,7 +15,10 @@ const routes = [
   {
     path: '/k-means',
     name: 'KMeans',
-    component: KMeans
+    component: KMeans,
+    meta: {
+      title: 'k平均法'
+    }
   },
   {
     path: '*',
