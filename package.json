@@ -55,6 +55,9 @@
       ],
       "prefer-promise-reject-errors": 0,
       "space-infix-ops": 0
+    },
+    "globals": {
+      "Go": true
     }
   },
   "browserslist": [
