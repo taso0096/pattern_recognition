@@ -44,7 +44,18 @@
     "parserOptions": {
       "parser": "babel-eslint"
     },
-    "rules": {}
+    "rules": {
+      "space-before-function-paren": [
+        "warn",
+        "never"
+      ],
+      "semi": [
+        "warn",
+        "always"
+      ],
+      "prefer-promise-reject-errors": 0,
+      "space-infix-ops": 0
+    }
   },
   "browserslist": [
     "> 1%",
