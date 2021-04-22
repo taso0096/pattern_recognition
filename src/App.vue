@@ -28,7 +28,7 @@
           </v-list-item>
           <v-divider />
           <div class="py-3 pl-4">
-            <div class="subtitle-2">© 2021 <a href="https://github.com/taso0096" target="_blank">@taso0096</a></div>
+            <div class="subtitle-2">© 2021 <a href="https://github.com/taso0096" target="_blank" rel="noopener">@taso0096</a></div>
           </div>
         </v-list>
       </v-sheet>
@@ -41,6 +41,7 @@
       color="white"
     >
       <v-app-bar-nav-icon
+        aria-label="menu-button"
         @click="appDrawer = !appDrawer"
       />
       <v-toolbar-title class="app-title pl-0 pl-sm-5">
