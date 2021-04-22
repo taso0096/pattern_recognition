@@ -35,7 +35,7 @@
         <v-row>
           <v-col class="col-12 col-sm-auto">
             <v-btn
-              :disabled="!isLoadedWasm || !clusterCount"
+              :disabled="!isLoadedWasm"
               depressed
               :block="$vuetify.breakpoint.smAndDown"
               class="mr-3"
