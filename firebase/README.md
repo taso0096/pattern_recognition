@@ -1,4 +1,4 @@
-# k_means
+# pattern_recognition
 
 ## Project setup
 ```
