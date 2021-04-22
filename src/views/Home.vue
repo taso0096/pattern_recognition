@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    home
+    パターン認識課題など
   </div>
 </template>
 
