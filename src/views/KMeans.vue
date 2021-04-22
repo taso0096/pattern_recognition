@@ -127,7 +127,8 @@ export default {
   methods: {
     async importWasm() {
       const go = new Go();
-      return await WebAssembly.instantiateStreaming(fetch('kmeans.wasm'), go.importObject)
+      const kmeans = await (await fetch('kmeans.wasm')).arrayBuffer();
+      await WebAssembly.instantiate(kmeans, go.importObject)
         .then(result => {
           go.run(result.instance);
           this.isLoadedWasm = true;
