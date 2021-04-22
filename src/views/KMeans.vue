@@ -49,7 +49,7 @@
               depressed
               :block="$vuetify.breakpoint.smAndDown"
               class="mr-3"
-              @click="calcGoKMeans"
+              @click="calcWasmKMeans"
             >計算(WASM)</v-btn>
           </v-col>
           <v-col class="col-6 col-sm-auto">
@@ -121,15 +121,18 @@ export default {
       }
     }
   }),
-  async mounted() {
-    const go = new Go();
-    await WebAssembly.instantiateStreaming(fetch('kmeans.wasm'), go.importObject)
-      .then(result => {
-        go.run(result.instance);
-        this.isLoadedWasm = true;
-      });
+  mounted() {
+    this.importWasm();
   },
   methods: {
+    async importWasm() {
+      const go = new Go();
+      return await WebAssembly.instantiateStreaming(fetch('kmeans.wasm'), go.importObject)
+        .then(result => {
+          go.run(result.instance);
+          this.isLoadedWasm = true;
+        });
+    },
     initDataset() {
       this.dataset = [];
       [...Array(Number(this.nodeCount))].forEach(() => {
@@ -154,14 +157,18 @@ export default {
       };
       this.$refs.chart.renderChart(this.chartdata, this.options);
     },
-    calcGoKMeans() {
+    async calcWasmKMeans() {
       const startTime = Date.now();
-      const result = window.kMeans(this.dataset, Number(this.clusterCount));
-      this.dataset.forEach((data, i) => {
-        data[2] = result[i];
-      });
-      this.calcTime = Date.now() - startTime;
-      this.setChartdata();
+      try {
+        const result = window.kMeans(this.dataset, Number(this.clusterCount));
+        this.dataset.forEach((data, i) => {
+          data[2] = result[i];
+        });
+        this.calcTime = Date.now() - startTime;
+        this.setChartdata();
+      } catch (e) {
+        await this.importWasm();
+      }
     },
     initData() {
       this.dataset.forEach(data => {
