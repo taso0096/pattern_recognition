@@ -1,5 +1,5 @@
 <template>
-  <div class="k-means">
+  <div class="k-means d-block d-lg-flex justify-center">
     <v-card
       outlined
       max-width="600"
@@ -64,7 +64,7 @@
         </v-row>
       </v-card-text>
     </v-card>
-    <div class="ml-0 ml-sm-5">
+    <div class="chart-wrapper ml-0 ml-sm-5">
       <scatter-chart
         ref="chart"
         :chartdata="chartdata"
@@ -77,6 +77,11 @@
 <style scoped>
 .config-card {
   height: fit-content;
+}
+@media (min-width:1264px) {
+  .chart-wrapper {
+    width: calc(100% - 600px - 10vw);
+  }
 }
 </style>
 
@@ -93,7 +98,6 @@ export default {
     calcTime: 0,
     clusterCount: 4,
     dataset: [],
-    colors: ['#ff2121', '#007dff', '#87ff00', '#8700ff', '#000000'],
     chartdata: {},
     options: {
       legend: {
@@ -150,7 +154,7 @@ export default {
             x: data[0],
             y: data[1]
           })),
-          backgroundColor: this.colors[i] || `#${Math.floor(Math.random()*0xFFFFFF).toString(16)}`
+          backgroundColor: `hsl(${360*i/this.clusterCount}, 100%, 70%)`
         });
       });
       this.chartdata = {
