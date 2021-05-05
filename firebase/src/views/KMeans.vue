@@ -94,7 +94,7 @@ export default {
   },
   data: () => ({
     isLoadedWasm: false,
-    nodeCount: 100,
+    nodeCount: 1000,
     calcTime: 0,
     clusterCount: 4,
     dataset: [],
@@ -138,10 +138,16 @@ export default {
           this.isLoadedWasm = true;
         });
     },
+    rnorm() {
+      return Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random());
+    },
     initDataset() {
       this.dataset = [];
-      [...Array(Number(this.nodeCount))].forEach(() => {
-        this.dataset.push([~~(Math.random()*100), ~~(Math.random()*100), 0]);
+      [...Array(Number(this.clusterCount))].forEach(() => {
+        const randomCoord = [~~(Math.random()*this.clusterCount*200), ~~(Math.random()*this.clusterCount*200)];
+        [...Array(Math.ceil(this.nodeCount/this.clusterCount))].forEach(() => {
+          this.dataset.push([~~(this.rnorm()*50) + randomCoord[0], ~~(this.rnorm()*50) + randomCoord[1], 0]);
+        });
       });
       this.setChartdata();
     },
