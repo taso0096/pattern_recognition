@@ -35,7 +35,6 @@
         <v-row>
           <v-col class="col-12 col-sm-auto">
             <v-btn
-              :disabled="!isLoadedWasm"
               depressed
               :block="$vuetify.breakpoint.smAndDown"
               class="mr-3"
@@ -44,7 +43,7 @@
           </v-col>
           <v-col class="col-6 col-sm-auto">
             <v-btn
-              :disabled="!dataset.length"
+              :disabled="!isLoadedWasm || !dataset.length"
               color="primary"
               depressed
               :block="$vuetify.breakpoint.smAndDown"
