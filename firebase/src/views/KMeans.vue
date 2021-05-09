@@ -38,12 +38,12 @@
               depressed
               :block="$vuetify.breakpoint.smAndDown"
               class="mr-3"
-              @click="initDataset"
-            >データ初期化</v-btn>
+              @click="generateData"
+            >データ生成</v-btn>
           </v-col>
           <v-col class="col-6 col-sm-auto">
             <v-btn
-              :disabled="!isLoadedWasm || !dataset.length"
+              :disabled="!isLoadedWasm || !data.length"
               color="primary"
               depressed
               :block="$vuetify.breakpoint.smAndDown"
@@ -53,7 +53,7 @@
           </v-col>
           <v-col class="col-6 col-sm-auto">
             <v-btn
-              :disabled="!dataset.length"
+              :disabled="!data.length"
               color="primary"
               depressed
               :block="$vuetify.breakpoint.smAndDown"
@@ -96,7 +96,7 @@ export default {
     nodeCount: 1000,
     calcTime: 0,
     clusterCount: 4,
-    dataset: [],
+    data: [],
     chartdata: {},
     options: {
       legend: {
@@ -138,14 +138,14 @@ export default {
         });
     },
     rnorm() {
-      return Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random());
+      return Math.sqrt(-2*Math.log(1 - Math.random()))*Math.cos(2*Math.PI*Math.random());
     },
-    initDataset() {
-      this.dataset = [];
+    generateData() {
+      this.data = [];
       [...Array(Number(this.clusterCount))].forEach(() => {
         const randomCoord = [~~(Math.random()*this.clusterCount*200), ~~(Math.random()*this.clusterCount*200)];
         [...Array(Math.ceil(this.nodeCount/this.clusterCount))].forEach(() => {
-          this.dataset.push([~~(this.rnorm()*50) + randomCoord[0], ~~(this.rnorm()*50) + randomCoord[1], 0]);
+          this.data.push([~~(this.rnorm()*50) + randomCoord[0], ~~(this.rnorm()*50) + randomCoord[1], 0]);
         });
       });
       this.setChartdata();
@@ -155,9 +155,9 @@ export default {
       [...Array(Number(this.clusterCount)).keys()].forEach(i => {
         datasets.push({
           label: i,
-          data: this.dataset.filter(data => data[2] === i).map(data => ({
-            x: data[0],
-            y: data[1]
+          data: this.data.filter(point => point[2] === i).map(point => ({
+            x: point[0],
+            y: point[1]
           })),
           backgroundColor: `hsl(${360*i/this.clusterCount}, 100%, 70%)`
         });
@@ -170,9 +170,9 @@ export default {
     async calcWasmKMeans() {
       const startTime = Date.now();
       try {
-        const result = window.kMeans(this.dataset, Number(this.clusterCount));
-        this.dataset.forEach((data, i) => {
-          data[2] = result[i];
+        const result = window.kMeans(this.data, Number(this.clusterCount));
+        this.data.forEach((point, i) => {
+          point[2] = result[i];
         });
         this.calcTime = Date.now() - startTime;
         this.setChartdata();
@@ -181,8 +181,8 @@ export default {
       }
     },
     initData() {
-      this.dataset.forEach(data => {
-        data[2] = ~~(Math.random()*Number(this.clusterCount));
+      this.data.forEach(point => {
+        point[2] = ~~(Math.random()*Number(this.clusterCount));
       });
     },
     calcCenter(clusters) {
@@ -190,12 +190,12 @@ export default {
         [...Array(2).keys()].forEach(coord => {
           let sumCoords = 0;
           let count = 0;
-          this.dataset.forEach(data => {
-            if (data[2] !== i) {
+          this.data.forEach(point => {
+            if (point[2] !== i) {
               return;
             }
             count++;
-            sumCoords += data[coord];
+            sumCoords += point[coord];
           });
           if (count > 0) {
             cluster[coord] = sumCoords/count;
@@ -204,12 +204,12 @@ export default {
       });
     },
     compareCenter(clusters) {
-      this.dataset.forEach(data => {
-        const nowDistance = Math.sqrt((data[0] - clusters[data[2]][0])**2 + (data[1] - clusters[data[2]][1])**2);
+      this.data.forEach(point => {
+        const nowDistance = Math.sqrt((point[0] - clusters[point[2]][0])**2 + (point[1] - clusters[point[2]][1])**2);
         clusters.forEach((cluster, i) => {
-          const distance = Math.sqrt((data[0] - cluster[0])**2 + (data[1] - cluster[1])**2);
+          const distance = Math.sqrt((point[0] - cluster[0])**2 + (point[1] - cluster[1])**2);
           if (distance < nowDistance) {
-            data[2] = i;
+            point[2] = i;
           }
         });
       });
