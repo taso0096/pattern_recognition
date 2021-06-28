@@ -92,6 +92,12 @@ export default {
         route: {
           name: 'KMeans'
         }
+      },
+      {
+        title: 'ロジスティック回帰',
+        route: {
+          name: 'LogisticRegression'
+        }
       }
     ]
   })
