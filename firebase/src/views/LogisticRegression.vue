@@ -75,9 +75,10 @@ export default {
     ScatterChart
   },
   data: () => ({
-    nodeCount: 1000,
+    nodeCount: 50,
     calcTime: 0,
     clusterCount: 2,
+    resultW: [],
     data: [],
     chartdata: {},
     options: {
@@ -92,12 +93,16 @@ export default {
       scales: {
         xAxes: [{
           ticks: {
-            fontSize: 16
+            fontSize: 16,
+            min: 0,
+            max: 1
           }
         }],
         yAxes: [{
           ticks: {
-            fontSize: 16
+            fontSize: 16,
+            min: 0,
+            max: 1
           }
         }]
       },
@@ -107,17 +112,14 @@ export default {
     }
   }),
   methods: {
-    rnorm() {
-      return Math.sqrt(-2*Math.log(1 - Math.random()))*Math.cos(2*Math.PI*Math.random());
-    },
     generateData() {
       this.data = [];
-      [...Array(Number(this.clusterCount)).keys()].forEach(i => {
-        const randomCoord = [~~(Math.random()*this.clusterCount*200), ~~(Math.random()*this.clusterCount*200)];
-        [...Array(Math.ceil(this.nodeCount/this.clusterCount))].forEach(() => {
-          this.data.push([~~(this.rnorm()*50) + randomCoord[0], ~~(this.rnorm()*50) + randomCoord[1], i]);
-        });
+      [...Array(Number(this.nodeCount))].forEach(() => {
+        const x = Math.random();
+        const y = Math.random();
+        this.data.push([x, y, Number(y > x + 0.1)]);
       });
+      this.resultW = [];
       this.setChartdata();
     },
     setChartdata() {
@@ -132,12 +134,73 @@ export default {
           backgroundColor: `hsl(${360*i/this.clusterCount}, 100%, 70%)`
         });
       });
+      if (this.resultW.length) {
+        const f = x => -(this.resultW[0]/this.resultW[1])*x - 1/this.resultW[1];
+        datasets.push({
+          label: '境界線',
+          type: 'line',
+          fill: false,
+          data: [
+            { x: 0, y: f(0) },
+            { x: 1, y: f(1) }
+          ],
+          backgroundColor: '#000'
+        });
+      }
       this.chartdata = {
         datasets
       };
       this.$refs.chart.renderChart(this.chartdata, this.options);
     },
+    calcSigmoid(matrix) {
+      const sigmoid = x => 1/(1 + Math.exp(-x));
+      return matrix.map(row => row.map(col => sigmoid(col)));
+    },
+    calcR(Z) {
+      const initRow = [...Array(Number(this.nodeCount))].map(() => 0);
+      const R = [...Array(Number(this.nodeCount))].map(() => [...initRow]);
+      R.forEach((row, i) => {
+        row[i] = Z[i][0]*(1 - Z[i][0]);
+      });
+      return R;
+    },
+    calcEw(Z, t) {
+      let ew = 0;
+      [...Array(Number(this.nodeCount)).keys()].forEach(i => {
+        ew -= Math.log(t[i][0]*Z[i][0] + (1 - t[i][0])*(1 - Z[i][0]))
+      });
+      return ew
+    },
     calcLogisticRegression() {
+      const math = window.math;
+      const X = this.data.map(row => row.slice(0, 2));
+      // パラメータw初期化
+      let w = [[...Array(2)].map(() => Math.random()*2 - 1)];
+
+      // 出力y
+      const xT = math.transpose(X);
+      let Z = math.transpose(this.calcSigmoid(math.multiply(w, xT)));
+
+      // 重み付け行列R
+      let R = this.calcR(Z);
+
+      // ヘッセ行列H
+      let H = math.multiply(math.multiply(xT, R), X);
+
+      // ニュートン法
+      const t = math.transpose([this.data.map(a => a[2])]); // 分類配列
+      [...Array(20)].forEach(() => {
+        const subW = math.multiply(math.multiply(math.inv(H), xT), math.subtract(Z, t));
+        w = math.subtract(w, math.transpose(subW));
+        Z = math.transpose(this.calcSigmoid(math.multiply(w, xT)));
+        R = this.calcR(Z);
+        H = math.multiply(math.multiply(xT, R), X);
+      });
+      console.log(math.transpose(Z));
+      console.log(w[0]);
+      console.log(this.calcEw(Z, t));
+      this.resultW = w[0];
+      this.setChartdata();
     }
   }
 };
