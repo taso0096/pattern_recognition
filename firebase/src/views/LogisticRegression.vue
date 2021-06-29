@@ -46,17 +46,17 @@
           <v-col class="col-12 col-sm-auto">
             <v-btn
               depressed
-              :block="$vuetify.breakpoint.smAndDown"
+              block
               class="mr-3"
               @click="generateData"
             >データ生成</v-btn>
           </v-col>
-          <v-col class="col-6 col-sm-auto">
+          <v-col class="col-12 col-sm-auto">
             <v-btn
               :disabled="!data.length"
               color="primary"
               depressed
-              :block="$vuetify.breakpoint.smAndDown"
+              block
               @click="calcLogisticRegression"
             >計算</v-btn>
           </v-col>
