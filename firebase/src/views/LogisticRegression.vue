@@ -11,8 +11,18 @@
           <v-col>
             <v-text-field
               v-model="nodeCount"
-              label="要素数"
+              label="教師データ数"
               type="number"
+            />
+          </v-col>
+        </v-row>
+        <v-row no-gutters>
+          <v-col>
+            <v-switch
+              v-model="isOverlap"
+              label="生成する領域を重ねる"
+              hide-details
+              inset
             />
           </v-col>
         </v-row>
@@ -22,6 +32,13 @@
               v-model="calcTime"
               readonly
               label="処理時間（ms）"
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              v-model="lastEntropy"
+              readonly
+              label="交差エントロピー誤差"
             />
           </v-col>
         </v-row>
@@ -52,6 +69,11 @@
         :chartdata="chartdata"
         :options="options"
       />
+      <scatter-chart
+        ref="entropy"
+        :chartdata="entropyData"
+        :options="options"
+      />
     </div>
   </div>
 </template>
@@ -75,12 +97,14 @@ export default {
     ScatterChart
   },
   data: () => ({
-    nodeCount: 50,
+    nodeCount: 500,
+    isOverlap: false,
     calcTime: 0,
     clusterCount: 2,
     resultW: [],
     data: [],
     chartdata: {},
+    entropyData: {},
     options: {
       legend: {
         labels: {
@@ -109,15 +133,51 @@ export default {
       animation: {
         duration: 0
       }
+    },
+    entropyOptions: {
+      legend: {
+        labels: {
+          fontSize: 16
+        }
+      },
+      tooltips: {
+        bodyFontSize: 16
+      },
+      scales: {
+        xAxes: [{
+          ticks: {
+            fontSize: 16
+          }
+        }],
+        yAxes: [{
+          ticks: {
+            fontSize: 16
+          }
+        }]
+      },
+      animation: {
+        duration: 0
+      }
     }
   }),
+  computed: {
+    lastEntropy() {
+      return (this.entropyData.datasets || [])[0]?.data.slice(-1)[0].y;
+    }
+  },
   methods: {
+    calcClass(x, y) {
+      return [
+        y > x,
+        y - x > 0.2 || (y - x < 0 ? 0 : Math.round(Math.random()))
+      ][Number(this.isOverlap)];
+    },
     generateData() {
       this.data = [];
       [...Array(Number(this.nodeCount))].forEach(() => {
         const x = Math.random();
         const y = Math.random();
-        this.data.push([x, y, Number(y > x + 0.1)]);
+        this.data.push([x, y, Number(this.calcClass(x, y))]);
       });
       this.resultW = [];
       this.setChartdata();
@@ -135,7 +195,7 @@ export default {
         });
       });
       if (this.resultW.length) {
-        const f = x => -(this.resultW[0]/this.resultW[1])*x - 1/this.resultW[1];
+        const f = x => -(this.resultW[0]/this.resultW[1])*x - this.resultW[2]/this.resultW[1];
         datasets.push({
           label: '境界線',
           type: 'line',
@@ -157,50 +217,59 @@ export default {
       return matrix.map(row => row.map(col => sigmoid(col)));
     },
     calcR(Z) {
-      const initRow = [...Array(Number(this.nodeCount))].map(() => 0);
-      const R = [...Array(Number(this.nodeCount))].map(() => [...initRow]);
-      R.forEach((row, i) => {
-        row[i] = Z[i][0]*(1 - Z[i][0]);
-      });
-      return R;
+      const R = [...Array(Number(this.nodeCount)).keys()].map(i => Z[i][0]*(1 - Z[i][0]));
+      return math.diag(R);
     },
     calcEw(Z, t) {
       let ew = 0;
       [...Array(Number(this.nodeCount)).keys()].forEach(i => {
-        ew -= Math.log(t[i][0]*Z[i][0] + (1 - t[i][0])*(1 - Z[i][0]))
+        ew -= Math.log(t[i][0]*Z[i][0] + (1 - t[i][0])*(1 - Z[i][0]));
       });
-      return ew
+      return ew;
     },
     calcLogisticRegression() {
-      const math = window.math;
-      const X = this.data.map(row => row.slice(0, 2));
+      const startTime = Date.now();
+      const datasets = [
+        {
+          label: '交差エントロピー誤差',
+          data: [],
+          backgroundColor: '#000'
+        }
+      ];
+      // 教師データ作成
+      const X = this.data.map(row => [...row.slice(0, 2), 1]);
+      const t = math.transpose([this.data.map(a => a[2])]);
       // パラメータw初期化
-      let w = [[...Array(2)].map(() => Math.random()*2 - 1)];
-
-      // 出力y
+      let w = [[...Array(3)].map(() => Math.random()*2 - 1)];
+      // 転置行列xT
       const xT = math.transpose(X);
+      // 出力行列Z
       let Z = math.transpose(this.calcSigmoid(math.multiply(w, xT)));
-
       // 重み付け行列R
       let R = this.calcR(Z);
-
       // ヘッセ行列H
       let H = math.multiply(math.multiply(xT, R), X);
 
       // ニュートン法
-      const t = math.transpose([this.data.map(a => a[2])]); // 分類配列
-      [...Array(20)].forEach(() => {
+      [...Array(20).keys()].forEach(i => {
         const subW = math.multiply(math.multiply(math.inv(H), xT), math.subtract(Z, t));
         w = math.subtract(w, math.transpose(subW));
         Z = math.transpose(this.calcSigmoid(math.multiply(w, xT)));
         R = this.calcR(Z);
         H = math.multiply(math.multiply(xT, R), X);
+        datasets[0].data.push({
+          x: i,
+          y: this.calcEw(Z, t)
+        });
       });
-      console.log(math.transpose(Z));
-      console.log(w[0]);
-      console.log(this.calcEw(Z, t));
       this.resultW = w[0];
+      this.calcTime = Date.now() - startTime;
       this.setChartdata();
+
+      this.entropyData = {
+        datasets
+      };
+      this.$refs.entropy.renderChart(this.entropyData, this.entropyOptions);
     }
   }
 };

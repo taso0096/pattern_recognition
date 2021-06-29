@@ -60,7 +60,8 @@
       "space-infix-ops": 0
     },
     "globals": {
-      "Go": true
+      "Go": true,
+      "math": true
     }
   },
   "browserslist": [
