@@ -98,6 +98,12 @@ export default {
         route: {
           name: 'LogisticRegression'
         }
+      },
+      {
+        title: 'EMアルゴリズム',
+        route: {
+          name: 'EMAlgorithm'
+        }
       }
     ]
   })

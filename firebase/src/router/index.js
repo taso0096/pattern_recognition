@@ -4,6 +4,7 @@ import VueRouter from 'vue-router';
 import Home from '../views/Home.vue';
 import KMeans from '../views/KMeans.vue';
 import LogisticRegression from '../views/LogisticRegression.vue';
+import EMAlgorithm from '../views/EMAlgorithm.vue';
 
 Vue.use(VueRouter);
 
@@ -27,6 +28,14 @@ const routes = [
     component: LogisticRegression,
     meta: {
       title: 'ロジスティック回帰'
+    }
+  },
+  {
+    path: '/em-algorithm',
+    name: 'EMAlgorithm',
+    component: EMAlgorithm,
+    meta: {
+      title: 'EMアルゴリズム'
     }
   },
   {
