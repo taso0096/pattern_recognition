@@ -3,6 +3,7 @@
     <v-card
       outlined
       max-width="600"
+      min-width="300"
       class="config-card mb-5"
     >
       <v-card-title>設定</v-card-title>
@@ -24,15 +25,6 @@
           </v-col>
         </v-row>
         <v-row>
-          <v-col>
-            <v-text-field
-              v-model="calcTime"
-              readonly
-              label="処理時間（ms）"
-            />
-          </v-col>
-        </v-row>
-        <v-row>
           <v-col class="col-12 col-sm-auto">
             <v-btn
               depressed
@@ -49,6 +41,93 @@
               :block="$vuetify.breakpoint.smAndDown"
               @click="calcEMAlgorithm"
             >計算</v-btn>
+          </v-col>
+        </v-row>
+      </v-card-text>
+
+      <v-card-title>パラメータ設定値</v-card-title>
+      <v-card-text>
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-for="(pi, i) in starParameters.pi"
+              :key="i"
+              :value="pi"
+              :label="`π_${i}`"
+              type="number"
+              readonly
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              v-for="(mu, i) in starParameters.mu"
+              :key="i"
+              :value="`[${mu}]`"
+              :label="`µ_${i}`"
+              readonly
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-textarea
+              v-for="(sigma, i) in starParameters.sigma"
+              :key="i"
+              :value="displaySigma(sigma)"
+              :label="`∑_${i}`"
+              readonly
+            />
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
+    <v-card
+      outlined
+      max-width="600"
+      min-width="300"
+      class="config-card mb-5 ml-lg-3"
+    >
+      <v-card-title>パラメータ推定値</v-card-title>
+      <v-card-text>
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-for="(pi, i) in emParameters.pi"
+              :key="i"
+              :value="pi"
+              :label="`π_${i}`"
+              type="number"
+              readonly
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              v-for="(mu, i) in emParameters.mu"
+              :key="i"
+              :value="`[${mu.map(v => Math.round(v*100)/100)}]`"
+              :label="`µ_${i}`"
+              readonly
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-textarea
+              v-for="(sigma, i) in emParameters.sigma"
+              :key="i"
+              :value="displaySigma(sigma)"
+              :label="`∑_${i}`"
+              readonly
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model="calcTime"
+              readonly
+              label="処理時間（ms）"
+            />
           </v-col>
         </v-row>
       </v-card-text>
@@ -127,6 +206,11 @@ export default {
     D: () => 2
   },
   methods: {
+    displaySigma(sigma) {
+      return (sigma._data || sigma).reduce((text, arr) => {
+        return `${text}[${arr.map(v => Math.round(v*100)/100)}],\n`;
+      }, '[\n') + ']';
+    },
     rnorm() {
       return Math.sqrt(-2*Math.log(1 - Math.random()))*Math.cos(2*Math.PI*Math.random());
     },
@@ -135,43 +219,80 @@ export default {
       const N = Number(this.nodeCount);
       const K = Number(this.clusterCount);
       this.X = [];
-      this.starParameters.pi = [];
-      this.starParameters.mu = [];
-      this.starParameters.sigma = [];
-      [...Array(K)].forEach(() => {
-        const randomCoord = [~~(Math.random()*K*20), ~~(Math.random()*K*20)];
-        const X = [];
-        [...Array(Math.ceil(N/K))].forEach(() => {
-          X.push([~~(this.rnorm()*5) + randomCoord[0], ~~(this.rnorm()*5) + randomCoord[1]]);
+      this.calcTime = 0;
+      while (!this.X.length || this.calcLikelihood(this.X, ...Object.values(this.starParameters)) === -Infinity) {
+        this.X = [];
+        this.starParameters.pi = [];
+        this.starParameters.mu = [];
+        this.starParameters.sigma = [];
+        this.emParameters.pi = [];
+        this.emParameters.mu = [];
+        this.emParameters.sigma = [];
+        let sumNodeCount = 0;
+        [...Array(K).keys()].map(i => ++i).forEach(i => {
+          const randomCoord = [~~(Math.random()*K*100), ~~(Math.random()*K*100)];
+          const X = [];
+          const s = Math.random() > 0.5;
+          const n = i === K ? N - sumNodeCount : Math.ceil(N*(Math.random() + 0.5)/K);
+          sumNodeCount += n;
+          [...Array(n)].forEach(() => {
+            X.push([~~(this.rnorm()*(s ? 50 : 10)) + randomCoord[0], ~~(this.rnorm()*(s ? 10 : 50)) + randomCoord[1]]);
+          });
+          this.X.push(...X);
+          this.starParameters.pi.push(n/1000);
+          this.starParameters.mu.push(randomCoord);
+          const e = math.mean(X, 0);
+          const v = math.variance(X, 0, 'uncorrected');
+          const cov = X.reduce((cov, x) => cov + (x[0] - e[0])*(x[1] - e[1]), 0)/X.length;
+          const sigma = math.add(math.subtract(math.multiply(math.ones(D, D), cov), math.diag([...Array(D)].map(() => cov))), math.diag(v));
+          this.starParameters.sigma.push(sigma);
         });
-        this.X.push(...X);
-        this.starParameters.pi.push(1/K);
-        this.starParameters.mu.push(randomCoord);
-        const e = math.mean(X, 0);
-        const v = math.variance(X, 0, 'uncorrected');
-        const cov = X.reduce((cov, x) => cov + (x[0] - e[0])*(x[1] - e[1]), 0)/X.length;
-        const sigma = math.add(math.subtract(math.multiply(math.ones(D, D), cov), math.diag([...Array(D)].map(() => cov))), math.diag(v));
-        this.starParameters.sigma.push(sigma);
-      });
+      }
       this.setChartdata();
+    },
+    selectCluster(x) {
+      const K = Number(this.clusterCount);
+      let cluster;
+      let greaterP = 0;
+      [...Array(K).keys()].forEach(k => {
+        const p = this.calcP(x, this.emParameters.mu[k], this.emParameters.sigma[k]);
+        if (p > greaterP) {
+          cluster = k;
+          greaterP = p;
+        }
+      });
+      return cluster;
     },
     setChartdata() {
       const K = Number(this.clusterCount);
       const datasets = [];
-      datasets.push({
-        label: 0,
-        data: this.X.map(point => ({
-          x: point[0],
-          y: point[1]
-        })),
-        backgroundColor: `hsl(${360*0/K}, 100%, 70%)`
-      });
+      if (this.emParameters.pi.length) {
+        [...Array(K).keys()].forEach(k => {
+          datasets.push({
+            label: k,
+            data: this.X.filter(x => this.selectCluster(x) === k).map(x => ({
+              x: x[0],
+              y: x[1]
+            })),
+            backgroundColor: `hsl(${360*k/K}, 100%, 70%)`
+          });
+        });
+      } else {
+        datasets.push({
+          label: 0,
+          data: this.X.map(x => ({
+            x: x[0],
+            y: x[1]
+          })),
+          backgroundColor: 'hsl(0, 100%, 70%)'
+        });
+      }
       this.chartdata = {
         datasets
       };
       this.$refs.chart.renderChart(this.chartdata, this.options);
     },
-    calcN(x, mu, sigma) {
+    calcP(x, mu, sigma) {
       const D = this.D;
       const a = 1/(2*Math.PI)**(D/2);
       const b = 1/math.det(sigma)**(1/2);
@@ -185,7 +306,7 @@ export default {
       let likelihood = 0;
       X.forEach(x => {
         [...Array(K).keys()].forEach(k => {
-          likelihood += Math.log(pi[k]*this.calcN(x, mu[k], sigma[k]));
+          likelihood += Math.log(pi[k]*this.calcP(x, mu[k], sigma[k]));
         });
       });
       return likelihood;
@@ -197,10 +318,10 @@ export default {
         gamma.push([]);
         let sum = 0;
         [...Array(K).keys()].forEach(k => {
-          sum += pi[k]*this.calcN(x, mu[k], sigma[k]);
+          sum += pi[k]*this.calcP(x, mu[k], sigma[k]);
         });
         [...Array(K).keys()].forEach(k => {
-          gamma.slice(-1)[0].push(pi[k]*this.calcN(x, mu[k], sigma[k])/sum);
+          gamma.slice(-1)[0].push(pi[k]*this.calcP(x, mu[k], sigma[k])/sum);
         });
       });
       return gamma;
@@ -232,36 +353,44 @@ export default {
       const D = this.D;
       const N = Number(this.nodeCount);
       const K = Number(this.clusterCount);
-      // パラメータ初期値
-      this.emParameters.pi = [...Array(K)].map(() => Math.random()/K);
-      this.emParameters.mu = [...Array(K)].map(() => [...Array(D)].map(() => Math.random()*5));
-      this.emParameters.sigma = [...Array(K)].map(() => math.add(math.multiply(math.ones(D, D), Math.random()*5), math.diag([...Array(D)].map(() => Math.random()*5))));
+      let simulateCount = 0;
+      let stepCount = 0;
+      let newL = -Infinity;
+      while (simulateCount < 20 && newL === -Infinity) {
+        // パラメータ初期値
+        this.emParameters.pi = [...Array(K)].map(() => 1/K);
+        this.emParameters.mu = [...Array(K)].map(() => [...Array(D)].map(() => Math.random()*100));
+        this.emParameters.sigma = [...Array(K)].map(() => math.add(math.multiply(math.ones(D, D), Math.random()*50), math.diag([...Array(D)].map(() => Math.random()*500))));
 
-      let count = 0;
-      let delta = 1;
-      while (count < 200 && Math.abs(delta) >= 0.01) {
-        // E-step
-        const gamma = this.calcGamma(this.X, ...Object.values(this.emParameters));
-        const Nm = math.sum(gamma, 0);
+        let delta = 1;
+        while (stepCount < 500 && Math.abs(delta) >= 0.01) {
+          // E-step
+          const gamma = this.calcGamma(this.X, ...Object.values(this.emParameters));
+          const Nm = math.sum(gamma, 0);
 
-        // M-step
-        const newParameters = {
-          pi: math.divide(Nm, N),
-          mu: this.calcMu(this.X, gamma, Nm),
-          sigma: this.calcSigma(this.X, gamma, Nm, this.emParameters.mu)
-        };
+          // M-step
+          const newParameters = {
+            pi: math.divide(Nm, N),
+            mu: this.calcMu(this.X, gamma, Nm),
+            sigma: this.calcSigma(this.X, gamma, Nm, this.emParameters.mu)
+          };
 
-        // 対数尤度関数
-        const l = this.calcLikelihood(this.X, ...Object.values(this.emParameters));
-        const newL = this.calcLikelihood(this.X, ...Object.values(newParameters));
-        this.emParameters = { ...newParameters };
-        delta = newL - l;
-        count++;
+          // 対数尤度関数
+          const l = this.calcLikelihood(this.X, ...Object.values(this.emParameters));
+          newL = this.calcLikelihood(this.X, ...Object.values(newParameters));
+          this.emParameters = { ...newParameters };
+          delta = newL - l;
+          stepCount++;
+        }
+        console.log(stepCount);
+        simulateCount++;
       }
+
       this.calcTime = Date.now() - startTime;
+      this.setChartdata();
 
       // 結果
-      console.log(count);
+      console.log(simulateCount);
       console.log(this.starParameters);
       console.log(this.emParameters);
       console.log(this.calcLikelihood(this.X, ...Object.values(this.starParameters)), this.calcLikelihood(this.X, ...Object.values(this.emParameters)));
