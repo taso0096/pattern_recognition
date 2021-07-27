@@ -220,9 +220,10 @@ export default {
       const D = this.D;
       const N = Number(this.nodeCount);
       const K = Number(this.clusterCount);
+      let l = -Infinity;
       this.X = [];
       this.calcTime = 0;
-      while (!this.X.length || this.calcLikelihood(this.X, ...Object.values(this.starParameters)) === -Infinity) {
+      while (!this.X.length || l === -Infinity || Number.isNaN(l)) {
         this.X = [];
         this.starParameters.pi = [];
         this.starParameters.mu = [];
@@ -249,6 +250,7 @@ export default {
           const sigma = math.add(math.subtract(math.multiply(math.ones(D, D), cov), math.diag([...Array(D)].map(() => cov))), math.diag(v));
           this.starParameters.sigma.push(sigma);
         });
+        l = this.calcLikelihood(this.X, ...Object.values(this.starParameters));
       }
       this.setChartdata();
     },
