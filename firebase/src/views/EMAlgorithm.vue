@@ -127,6 +127,7 @@
               v-model="calcTime"
               readonly
               label="処理時間（ms）"
+              :error="isFailedSimulation"
             />
           </v-col>
         </v-row>
@@ -161,6 +162,7 @@ export default {
     ScatterChart
   },
   data: () => ({
+    isFailedSimulation: false,
     nodeCount: 1000,
     calcTime: 0,
     clusterCount: 3,
@@ -208,7 +210,7 @@ export default {
   methods: {
     displaySigma(sigma) {
       return (sigma._data || sigma).reduce((text, arr) => {
-        return `${text}[${arr.map(v => Math.round(v*100)/100)}],\n`;
+        return `${text}  [${arr.map(v => Math.round(v*100)/100)}],\n`;
       }, '[\n') + ']';
     },
     rnorm() {
@@ -349,6 +351,7 @@ export default {
       return math.sum(sigma, 0);
     },
     calcEMAlgorithm() {
+      this.isFailedSimulation = false;
       const startTime = Date.now();
       const D = this.D;
       const N = Number(this.nodeCount);
@@ -356,7 +359,9 @@ export default {
       let simulateCount = 0;
       let stepCount = 0;
       let newL = -Infinity;
-      while (simulateCount < 20 && newL === -Infinity) {
+
+      while (simulateCount < 20 && (newL === -Infinity || Number.isNaN(newL))) {
+        stepCount = 0;
         // パラメータ初期値
         this.emParameters.pi = [...Array(K)].map(() => 1/K);
         this.emParameters.mu = [...Array(K)].map(() => [...Array(D)].map(() => Math.random()*100));
@@ -385,7 +390,9 @@ export default {
         console.log(stepCount);
         simulateCount++;
       }
-
+      if (newL === -Infinity || Number.isNaN(newL)) {
+        this.isFailedSimulation = true;
+      }
       this.calcTime = Date.now() - startTime;
       this.setChartdata();
 
