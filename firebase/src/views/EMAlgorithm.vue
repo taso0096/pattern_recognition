@@ -43,7 +43,7 @@
           </v-col>
           <v-col class="col-6 col-sm-auto">
             <v-btn
-              :disabled="!data.length"
+              :disabled="!X.length"
               color="primary"
               depressed
               :block="$vuetify.breakpoint.smAndDown"
@@ -82,11 +82,20 @@ export default {
     ScatterChart
   },
   data: () => ({
-    isLoadedWasm: false,
     nodeCount: 1000,
     calcTime: 0,
-    clusterCount: 4,
-    data: [],
+    clusterCount: 3,
+    X: [],
+    starParameters: {
+      pi: [],
+      mu: [],
+      sigma: []
+    },
+    emParameters: {
+      pi: [],
+      mu: [],
+      sigma: []
+    },
     chartdata: {},
     options: {
       legend: {
@@ -119,36 +128,49 @@ export default {
       return Math.sqrt(-2*Math.log(1 - Math.random()))*Math.cos(2*Math.PI*Math.random());
     },
     generateData() {
-      this.data = [];
+      this.X = [];
+      this.starParameters.mu = [];
+      this.starParameters.sigma = [];
       [...Array(Number(this.clusterCount))].forEach(() => {
         const randomCoord = [~~(Math.random()*this.clusterCount*200), ~~(Math.random()*this.clusterCount*200)];
+        const X = [];
         [...Array(Math.ceil(this.nodeCount/this.clusterCount))].forEach(() => {
-          this.data.push([~~(this.rnorm()*50) + randomCoord[0], ~~(this.rnorm()*50) + randomCoord[1], 0]);
+          X.push([~~(this.rnorm()*50) + randomCoord[0], ~~(this.rnorm()*50) + randomCoord[1]]);
         });
+        this.X.push(...X);
+        this.starParameters.pi.push(1/this.clusterCount);
+        this.starParameters.mu.push(randomCoord);
+        const e = math.mean(X, 0);
+        const v = math.variance(X, 0, 'uncorrected');
+        const cov = X.reduce((cov, x) => cov + (x[0] - e[0])*(x[1] - e[1]), 0)/X.length;
+        const sigma = math.add(math.subtract(math.multiply(math.ones(2, 2), cov), math.diag([...Array(2)].map(() => cov))), math.diag(v));
+        this.starParameters.sigma.push(sigma);
       });
       this.setChartdata();
     },
     setChartdata() {
       const datasets = [];
-      [...Array(Number(this.clusterCount)).keys()].forEach(i => {
-        datasets.push({
-          label: i,
-          data: this.data.filter(point => point[2] === i).map(point => ({
-            x: point[0],
-            y: point[1]
-          })),
-          backgroundColor: `hsl(${360*i/this.clusterCount}, 100%, 70%)`
-        });
+      datasets.push({
+        label: 0,
+        data: this.X.map(point => ({
+          x: point[0],
+          y: point[1]
+        })),
+        backgroundColor: `hsl(${360*0/this.clusterCount}, 100%, 70%)`
       });
       this.chartdata = {
         datasets
       };
       this.$refs.chart.renderChart(this.chartdata, this.options);
     },
-    initData() {
-      this.data.forEach(point => {
-        point[2] = ~~(Math.random()*Number(this.clusterCount));
-      });
+    calcN(x, mu, sigma) {
+      const D = 2;
+      const a = 1/(2*Math.PI)**(D/2);
+      const b = 1/math.det(sigma)**(1/2);
+      const c = math.multiply(-1/2, math.transpose(math.subtract(x, mu)));
+      const d = math.inv(sigma);
+      const e = math.subtract(x, mu);
+      return math.multiply(a, b, math.exp(math.multiply(c, d, e)));
     },
     calcEMAlgorithm() {
     }
