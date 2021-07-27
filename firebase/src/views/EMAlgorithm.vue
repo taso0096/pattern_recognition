@@ -28,17 +28,17 @@
           <v-col class="col-12 col-sm-auto">
             <v-btn
               depressed
-              :block="$vuetify.breakpoint.smAndDown"
+              block
               class="mr-3"
               @click="generateData"
             >データ生成</v-btn>
           </v-col>
-          <v-col class="col-6 col-sm-auto">
+          <v-col class="col-12 col-sm-auto">
             <v-btn
               :disabled="!X.length"
               color="primary"
               depressed
-              :block="$vuetify.breakpoint.smAndDown"
+              block
               @click="calcEMAlgorithm"
             >計算</v-btn>
           </v-col>
