@@ -23,6 +23,16 @@
             />
           </v-col>
         </v-row>
+        <v-row no-gutters>
+          <v-col>
+            <v-switch
+              v-model="useRbf"
+              label="RBFネットワーク"
+              hide-details
+              inset
+            />
+          </v-col>
+        </v-row>
         <v-row>
           <v-col>
             <v-text-field
@@ -87,6 +97,7 @@ export default {
     data: [],
     n: 3,
     w: null,
+    useRbf: false,
     chartdata: {},
     options: {
       legend: {
@@ -118,7 +129,7 @@ export default {
     generateData() {
       this.data = [];
       [...new Array(Number(this.nodeCount)).keys()].map(v => ++v).forEach(i => {
-        this.data.push([i, Math.sin(2*Math.PI*i/this.nodeCount) + (Math.random() - 0.5)/2]);
+        this.data.push([i, Math.sin(2*Math.PI*i/this.nodeCount - Math.PI) + (Math.random() - 0.5)/2]);
       });
       this.w = null;
       this.setChartdata();
@@ -134,7 +145,7 @@ export default {
         backgroundColor: 'hsl(0, 100%, 70%)'
       });
       if (this.w) {
-        const f = x => this.w.map((wi, i) => [wi, i]).reduce((y, [wi, i]) => y + wi*x**i, 0);
+        const f = x => this.w.map((wi, i) => [wi, i]).reduce((y, [wi, i]) => y + wi*this.calcPhi(x, i), 0);
         const data = [];
         [...new Array(Number(this.nodeCount)).keys()].map(v => ++v).forEach(i => {
           data.push({ x: i, y: f(i) });
@@ -152,11 +163,19 @@ export default {
       };
       this.$refs.chart.renderChart(this.chartdata, this.options);
     },
+    calcPhi(x, i) {
+      if (this.useRbf) {
+        const mu = (this.nodeCount/this.n)*i;
+        const sigma = 0.1;
+        return math.exp(-1*(x - mu)**2/2*sigma**2);
+      }
+      return x**i;
+    },
     calcPolynomialRegression() {
       const startTime = Date.now();
       // 多項式回帰
-      const phi = this.data.map(p => [...new Array(Number(this.n)).keys()].map(v => ++v).reduce((row, n) => {
-        row.push(p[0]**n);
+      const phi = this.data.map(p => [...new Array(Number(this.n)).keys()].map(i => ++i).reduce((row, i) => {
+        row.push(this.calcPhi(p[0], i));
         return row;
       }, [1]));
       const phiT = math.transpose(phi);
