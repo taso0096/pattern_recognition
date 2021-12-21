@@ -6,6 +6,7 @@ import KMeans from '../views/KMeans.vue';
 import LogisticRegression from '../views/LogisticRegression.vue';
 import EMAlgorithm from '../views/EMAlgorithm.vue';
 import LeastSquares from '../views/LeastSquares.vue';
+import PolynomialRegression from '../views/PolynomialRegression.vue';
 
 Vue.use(VueRouter);
 
@@ -45,6 +46,14 @@ const routes = [
     component: LeastSquares,
     meta: {
       title: '最小二乗法'
+    }
+  },
+  {
+    path: '/polynomial-regression',
+    name: 'PolynomialRegression',
+    component: PolynomialRegression,
+    meta: {
+      title: '多項式回帰'
     }
   },
   {

@@ -110,6 +110,12 @@ export default {
         route: {
           name: 'LeastSquares'
         }
+      },
+      {
+        title: '多項式回帰',
+        route: {
+          name: 'PolynomialRegression'
+        }
       }
     ]
   })
