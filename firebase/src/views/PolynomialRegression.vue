@@ -23,13 +23,12 @@
             />
           </v-col>
         </v-row>
-        <v-row no-gutters>
+        <v-row>
           <v-col>
-            <v-switch
-              v-model="useRbf"
-              label="RBFネットワーク"
-              hide-details
-              inset
+            <v-select
+              v-model="basisFunction"
+              :items="basisFunctionList"
+              label="基底関数"
             />
           </v-col>
         </v-row>
@@ -97,7 +96,11 @@ export default {
     data: [],
     n: 3,
     w: null,
-    useRbf: false,
+    basisFunction: 0,
+    basisFunctionList: [
+      { text: '多項式基底', value: 0 },
+      { text: 'ガウス基底', value: 1 }
+    ],
     chartdata: {},
     options: {
       legend: {
@@ -164,7 +167,7 @@ export default {
       this.$refs.chart.renderChart(this.chartdata, this.options);
     },
     calcPhi(x, i) {
-      if (this.useRbf) {
+      if (this.basisFunction === 1) {
         const mu = (this.nodeCount/this.n)*i;
         const sigma = 0.1;
         return math.exp(-1*(x - mu)**2/2*sigma**2);
