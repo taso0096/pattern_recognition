@@ -15,6 +15,13 @@
               type="number"
             />
           </v-col>
+          <v-col>
+            <v-text-field
+              v-model="n"
+              label="次数"
+              type="number"
+            />
+          </v-col>
         </v-row>
         <v-row>
           <v-col>
@@ -78,6 +85,8 @@ export default {
     nodeCount: 100,
     calcTime: 0,
     data: [],
+    n: 3,
+    w: null,
     chartdata: {},
     options: {
       legend: {
@@ -111,6 +120,7 @@ export default {
       [...new Array(Number(this.nodeCount)).keys()].map(v => ++v).forEach(i => {
         this.data.push([i, Math.sin(2*Math.PI*i/this.nodeCount) + (Math.random() - 0.5)/2]);
       });
+      this.w = null;
       this.setChartdata();
     },
     setChartdata() {
@@ -123,6 +133,20 @@ export default {
         })),
         backgroundColor: 'hsl(0, 100%, 70%)'
       });
+      if (this.w) {
+        const f = x => this.w.map((wi, i) => [wi, i]).reduce((y, [wi, i]) => y + wi*x**i, 0);
+        const data = [];
+        [...new Array(Number(this.nodeCount)).keys()].map(v => ++v).forEach(i => {
+          data.push({ x: i, y: f(i) });
+        });
+        datasets.push({
+          label: '回帰曲線',
+          type: 'line',
+          fill: false,
+          data,
+          backgroundColor: '#000'
+        });
+      }
       this.chartdata = {
         datasets
       };
@@ -130,6 +154,14 @@ export default {
     },
     calcPolynomialRegression() {
       const startTime = Date.now();
+      // 多項式回帰
+      const phi = this.data.map(p => [...new Array(Number(this.n)).keys()].map(v => ++v).reduce((row, n) => {
+        row.push(p[0]**n);
+        return row;
+      }, [1]));
+      const phiT = math.transpose(phi);
+      const y = this.data.map(p => p[1]);
+      this.w = math.multiply(math.inv(math.multiply(phiT, phi)), phiT, y);
       this.calcTime = Date.now() - startTime;
       this.setChartdata();
     }
