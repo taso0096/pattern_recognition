@@ -104,6 +104,12 @@ export default {
         route: {
           name: 'EMAlgorithm'
         }
+      },
+      {
+        title: '最小二乗法',
+        route: {
+          name: 'LeastSquares'
+        }
       }
     ]
   })

@@ -5,6 +5,7 @@ import Home from '../views/Home.vue';
 import KMeans from '../views/KMeans.vue';
 import LogisticRegression from '../views/LogisticRegression.vue';
 import EMAlgorithm from '../views/EMAlgorithm.vue';
+import LeastSquares from '../views/LeastSquares.vue';
 
 Vue.use(VueRouter);
 
@@ -36,6 +37,14 @@ const routes = [
     component: EMAlgorithm,
     meta: {
       title: 'EMアルゴリズム'
+    }
+  },
+  {
+    path: '/least-squares',
+    name: 'LeastSquares',
+    component: LeastSquares,
+    meta: {
+      title: '最小二乗法'
     }
   },
   {
