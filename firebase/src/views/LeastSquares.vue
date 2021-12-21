@@ -16,6 +16,16 @@
             />
           </v-col>
         </v-row>
+        <v-row no-gutters>
+          <v-col>
+            <v-switch
+              v-model="isOutlier"
+              label="外れ値を生成する"
+              hide-details
+              inset
+            />
+          </v-col>
+        </v-row>
         <v-row>
           <v-col>
             <v-text-field
@@ -80,6 +90,7 @@ export default {
     data: [],
     a: null,
     b: null,
+    isOutlier: false,
     chartdata: {},
     options: {
       legend: {
@@ -110,9 +121,12 @@ export default {
   methods: {
     generateData() {
       this.data = [];
-      [...new Array(Number(this.nodeCount)).keys()].map(v => ++v).forEach(i => {
+      [...new Array(Number(this.nodeCount - this.isOutlier)).keys()].map(v => ++v).forEach(i => {
         this.data.push([10*i, 10*i + Math.random()*20 - 5]);
       });
+      if (this.isOutlier) {
+        this.data.push([10*this.nodeCount, 10*this.nodeCount + this.nodeCount*10])
+      }
       this.a = null;
       this.b = null;
       this.setChartdata();
