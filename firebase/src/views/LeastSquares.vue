@@ -40,7 +40,7 @@
               color="primary"
               depressed
               :block="$vuetify.breakpoint.smAndDown"
-              @click="calc"
+              @click="calcLeastSquares"
             >計算</v-btn>
           </v-col>
         </v-row>
@@ -78,6 +78,8 @@ export default {
     nodeCount: 20,
     calcTime: 0,
     data: [],
+    a: null,
+    b: null,
     chartdata: {},
     options: {
       legend: {
@@ -108,28 +110,49 @@ export default {
   methods: {
     generateData() {
       this.data = [];
-      [...new Array(Number(this.nodeCount)).keys()].forEach(i => {
+      [...new Array(Number(this.nodeCount)).keys()].map(v => ++v).forEach(i => {
         this.data.push([10*i, 10*i + Math.random()*20 - 5]);
       });
+      this.a = null;
+      this.b = null;
       this.setChartdata();
     },
     setChartdata() {
       const datasets = [];
       datasets.push({
-        label: 0,
+        label: 'データ',
         data: this.data.map(point => ({
           x: point[0],
           y: point[1]
         })),
         backgroundColor: 'hsl(0, 100%, 70%)'
       });
+      if (this.a && this.b) {
+        const f = x => this.a*x + this.b;
+        datasets.push({
+          label: '境界線',
+          type: 'line',
+          fill: false,
+          data: [
+            { x: 0, y: f(0) },
+            { x: this.nodeCount*10, y: f(this.nodeCount*10) }
+          ],
+          backgroundColor: '#000'
+        });
+      }
       this.chartdata = {
         datasets
       };
       this.$refs.chart.renderChart(this.chartdata, this.options);
     },
-    calc() {
+    calcLeastSquares() {
       const startTime = Date.now();
+      // 最小二乗法
+      const [xBar, yBar] = math.mean(this.data, 0);
+      const varX = math.variance(this.data, 0, 'uncorrected')[0];
+      const covXY = this.data.reduce((cov, [x, y]) => cov + (x - xBar)*(y - yBar), 0)/this.data.length;
+      this.a = covXY/varX;
+      this.b = yBar - this.a*xBar;
       this.calcTime = Date.now() - startTime;
       this.setChartdata();
     }
