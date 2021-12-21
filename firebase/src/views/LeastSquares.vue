@@ -144,7 +144,7 @@ export default {
       if (this.a && this.b) {
         const f = x => this.a*x + this.b;
         datasets.push({
-          label: '境界線',
+          label: '回帰直線',
           type: 'line',
           fill: false,
           data: [
