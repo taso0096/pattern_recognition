@@ -7,6 +7,7 @@ import LogisticRegression from '../views/LogisticRegression.vue';
 import EMAlgorithm from '../views/EMAlgorithm.vue';
 import LeastSquares from '../views/LeastSquares.vue';
 import PolynomialRegression from '../views/PolynomialRegression.vue';
+import MultilayerPerceptron from '../views/MultilayerPerceptron.vue';
 
 Vue.use(VueRouter);
 
@@ -54,6 +55,14 @@ const routes = [
     component: PolynomialRegression,
     meta: {
       title: '多項式回帰'
+    }
+  },
+  {
+    path: '/multilayer-perceptron',
+    name: 'MultilayerPerceptron',
+    component: MultilayerPerceptron,
+    meta: {
+      title: '多層パーセプトロン'
     }
   },
   {

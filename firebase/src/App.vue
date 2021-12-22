@@ -116,6 +116,12 @@ export default {
         route: {
           name: 'PolynomialRegression'
         }
+      },
+      {
+        title: '多層パーセプトロン',
+        route: {
+          name: 'MultilayerPerceptron'
+        }
       }
     ]
   })

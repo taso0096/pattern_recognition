@@ -15,22 +15,6 @@
               type="number"
             />
           </v-col>
-          <v-col>
-            <v-text-field
-              v-model="n"
-              label="次数"
-              type="number"
-            />
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col>
-            <v-select
-              v-model="basisFunction"
-              :items="basisFunctionList"
-              label="基底関数"
-            />
-          </v-col>
         </v-row>
         <v-row>
           <v-col>
@@ -56,7 +40,7 @@
               color="primary"
               depressed
               :block="$vuetify.breakpoint.smAndDown"
-              @click="calcPolynomialRegression"
+              @click="calcMultilayerPerceptron"
             >計算</v-btn>
           </v-col>
         </v-row>
@@ -94,13 +78,6 @@ export default {
     nodeCount: 100,
     calcTime: 0,
     data: [],
-    n: 3,
-    w: null,
-    basisFunction: 0,
-    basisFunctionList: [
-      { text: '多項式基底', value: 0 },
-      { text: 'ガウス基底', value: 1 }
-    ],
     chartdata: {},
     options: {
       legend: {
@@ -134,7 +111,6 @@ export default {
       [...new Array(Number(this.nodeCount)).keys()].map(v => ++v).forEach(i => {
         this.data.push([i, Math.sin(2*Math.PI*i/this.nodeCount - Math.PI) + (Math.random() - 0.5)/2]);
       });
-      this.w = null;
       this.setChartdata();
     },
     setChartdata() {
@@ -147,43 +123,14 @@ export default {
         })),
         backgroundColor: 'hsl(0, 100%, 70%)'
       });
-      if (this.w) {
-        const f = x => this.w.map((wi, i) => [wi, i]).reduce((y, [wi, i]) => y + wi*this.calcPhi(x, i), 0);
-        const data = [];
-        [...new Array(Number(this.nodeCount)).keys()].map(v => ++v).forEach(i => {
-          data.push({ x: i, y: f(i) });
-        });
-        datasets.push({
-          label: '回帰曲線',
-          type: 'line',
-          fill: false,
-          data,
-          backgroundColor: '#000'
-        });
-      }
       this.chartdata = {
         datasets
       };
       this.$refs.chart.renderChart(this.chartdata, this.options);
     },
-    calcPhi(x, i) {
-      if (this.basisFunction === 1) {
-        const mu = (this.nodeCount/this.n)*i;
-        const sigma = 0.1;
-        return math.exp(-1*(x - mu)**2/2*sigma**2);
-      }
-      return x**i;
-    },
-    calcPolynomialRegression() {
+    calcMultilayerPerceptron() {
       const startTime = Date.now();
-      // 多項式回帰
-      const phi = this.data.map(p => [...new Array(Number(this.n) + 1).keys()].reduce((row, i) => {
-        row.push(this.calcPhi(p[0], i));
-        return row;
-      }, []));
-      const phiT = math.transpose(phi);
-      const y = this.data.map(p => p[1]);
-      this.w = math.multiply(math.inv(math.multiply(phiT, phi)), phiT, y);
+      // 多層パーセプトロン
       this.calcTime = Date.now() - startTime;
       this.setChartdata();
     }
