@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    パターン認識課題など
+    各種アルゴリズムをシミュレーションできます。
   </div>
 </template>
 

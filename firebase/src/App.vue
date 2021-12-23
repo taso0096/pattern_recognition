@@ -11,7 +11,7 @@
           <v-list>
             <v-list-item>
               <v-list-item-content>
-                <v-list-item-title class="title">パターン認識課題</v-list-item-title>
+                <v-list-item-title class="title">アルゴリズムシミュレーター</v-list-item-title>
               </v-list-item-content>
             </v-list-item>
           </v-list>
@@ -45,7 +45,7 @@
         @click="appDrawer = !appDrawer"
       />
       <v-toolbar-title class="app-title pl-0 pl-sm-5">
-        <span v-if="!$vuetify.breakpoint.smAndDown || !$route.meta.title">パターン認識課題</span>
+        <span v-if="!$vuetify.breakpoint.smAndDown || !$route.meta.title">アルゴリズムシミュレーター</span>
         <template v-if="$route.meta.title">
           <span
             v-if="!$vuetify.breakpoint.smAndDown"
