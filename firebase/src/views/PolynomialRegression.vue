@@ -139,14 +139,6 @@ export default {
     },
     setChartdata() {
       const datasets = [];
-      datasets.push({
-        label: 'データ',
-        data: this.data.map(point => ({
-          x: point[0],
-          y: point[1]
-        })),
-        backgroundColor: 'hsl(0, 100%, 70%)'
-      });
       if (this.w) {
         const f = x => this.w.map((wi, i) => [wi, i]).reduce((y, [wi, i]) => y + wi*this.calcPhi(x, i), 0);
         const data = [];
@@ -161,6 +153,14 @@ export default {
           backgroundColor: '#000'
         });
       }
+      datasets.push({
+        label: 'データ',
+        data: this.data.map(point => ({
+          x: point[0],
+          y: point[1]
+        })),
+        backgroundColor: 'hsl(0, 100%, 70%)'
+      });
       this.chartdata = {
         datasets
       };
