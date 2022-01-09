@@ -91,6 +91,8 @@ export default {
       scales: {
         xAxes: [{
           ticks: {
+            min: -0.5,
+            max: 0.5,
             fontSize: 16
           }
         }],
@@ -105,17 +107,50 @@ export default {
       }
     }
   }),
+  computed: {
+    mu: () => 0,
+    sigma: () => 9
+  },
   methods: {
     generateData() {
       this.data = [];
+      [...new Array(Number(this.nodeCount)).keys()].map(v => v/(this.nodeCount - 1) - 0.5).forEach(x => {
+        this.data.push([x, this.gaussFunc(x)]);
+      });
       this.setChartdata();
     },
     setChartdata() {
       const datasets = [];
+      datasets.push({
+        label: 'サンプル',
+        data: this.data.map(point => ({
+          x: point[0],
+          y: point[1]
+        })),
+        backgroundColor: 'hsl(0, 100%, 70%)'
+      });
+      const gaussData = [];
+      [...new Array(100).keys()].map(v => v/99 - 0.5).forEach(x => {
+        gaussData.push([x, this.gaussFunc(x)]);
+      });
+      datasets.push({
+        label: 'ガウス分布',
+        type: 'line',
+        fill: false,
+        data: gaussData.map(point => ({
+          x: point[0],
+          y: point[1]
+        })),
+        backgroundColor: 'rgba(0, 0, 0, 0)',
+        borderColor: '#ddd'
+      });
       this.chartdata = {
         datasets
       };
       this.$refs.chart.renderChart(this.chartdata, this.options);
+    },
+    gaussFunc(x) {
+      return (1/Math.sqrt(2*Math.PI*this.sigma**2))*Math.exp(-1*(x - this.mu)**2/2*this.sigma**2);
     },
     calcBayesianInference() {
       const startTime = Date.now();
