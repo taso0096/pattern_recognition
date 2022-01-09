@@ -122,6 +122,12 @@ export default {
         route: {
           name: 'MultilayerPerceptron'
         }
+      },
+      {
+        title: 'ベイズ推定',
+        route: {
+          name: 'BayesianInference'
+        }
       }
     ]
   })

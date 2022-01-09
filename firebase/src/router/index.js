@@ -8,6 +8,7 @@ import EMAlgorithm from '../views/EMAlgorithm.vue';
 import LeastSquares from '../views/LeastSquares.vue';
 import PolynomialRegression from '../views/PolynomialRegression.vue';
 import MultilayerPerceptron from '../views/MultilayerPerceptron.vue';
+import BayesianInference from '../views/BayesianInference.vue';
 
 Vue.use(VueRouter);
 
@@ -63,6 +64,14 @@ const routes = [
     component: MultilayerPerceptron,
     meta: {
       title: '多層パーセプトロン'
+    }
+  },
+  {
+    path: '/bayesian-inference',
+    name: 'BayesianInference',
+    component: BayesianInference,
+    meta: {
+      title: 'ベイズ推定'
     }
   },
   {
