@@ -26,22 +26,33 @@
           </v-col>
         </v-row>
         <v-row>
-          <v-col class="col-12 col-sm-auto">
+          <v-col>
             <v-btn
               depressed
-              :block="$vuetify.breakpoint.smAndDown"
+              block
               class="mr-3"
               @click="generateData"
             >データ生成</v-btn>
           </v-col>
-          <v-col class="col-12 col-sm-auto">
+        </v-row>
+        <v-row>
+          <v-col class="col-12 col-sm-6">
             <v-btn
               :disabled="!data.length"
               color="primary"
               depressed
-              :block="$vuetify.breakpoint.smAndDown"
+              block
+              @click="calcMLE"
+            >最尤推定</v-btn>
+          </v-col>
+          <v-col class="col-12 col-sm-6">
+            <v-btn
+              :disabled="!data.length"
+              color="primary"
+              depressed
+              block
               @click="calcBayesianInference"
-            >計算</v-btn>
+            >ベイズ推定</v-btn>
           </v-col>
         </v-row>
       </v-card-text>
@@ -78,6 +89,9 @@ export default {
     nodeCount: 100,
     calcTime: 0,
     data: [],
+    type: null,
+    mu: null,
+    sigma: null,
     chartdata: {},
     options: {
       legend: {
@@ -108,19 +122,40 @@ export default {
     }
   }),
   computed: {
-    mu: () => 0,
-    sigma: () => 9
+    MU: () => 0,
+    SIGMA: () => 9
   },
   methods: {
     generateData() {
       this.data = [];
-      [...new Array(Number(this.nodeCount)).keys()].map(v => v/(this.nodeCount - 1) - 0.5).forEach(x => {
-        this.data.push([x, this.gaussFunc(x)]);
+      [...new Array(Number(this.nodeCount))].forEach(() => {
+        const x = this.rnorm(this.MU, this.SIGMA);
+        this.data.push([x, this.gaussFunc(x, this.MU, this.SIGMA)]);
       });
+      this.type = null;
+      this.mu = null;
+      this.sigma = null;
       this.setChartdata();
     },
     setChartdata() {
       const datasets = [];
+      if (this.type) {
+        const inferenceData = [];
+        [...new Array(100).keys()].map(v => v/99 - 0.5).forEach(x => {
+          inferenceData.push([x, this.gaussFunc(x, this.mu, this.sigma)]);
+        });
+        datasets.push({
+          label: this.type === 1 ? '最尤推定' : 'ガウス分布',
+          type: 'line',
+          fill: false,
+          data: inferenceData.map(point => ({
+            x: point[0],
+            y: point[1]
+          })),
+          backgroundColor: 'hsl(180, 100%, 70%)',
+          borderColor: 'hsl(180, 100%, 70%)'
+        });
+      }
       datasets.push({
         label: 'サンプル',
         data: this.data.map(point => ({
@@ -131,7 +166,7 @@ export default {
       });
       const gaussData = [];
       [...new Array(100).keys()].map(v => v/99 - 0.5).forEach(x => {
-        gaussData.push([x, this.gaussFunc(x)]);
+        gaussData.push([x, this.gaussFunc(x, this.MU, this.SIGMA)]);
       });
       datasets.push({
         label: 'ガウス分布',
@@ -149,10 +184,28 @@ export default {
       };
       this.$refs.chart.renderChart(this.chartdata, this.options);
     },
-    gaussFunc(x) {
-      return (1/Math.sqrt(2*Math.PI*this.sigma**2))*Math.exp(-1*(x - this.mu)**2/2*this.sigma**2);
+    rnorm(mu, sigma) {
+      return Math.sqrt(-2*Math.log(1 - Math.random()))*Math.cos(2*Math.PI*Math.random())*sigma + mu;
+    },
+    gaussFunc(x, mu, sigma) {
+      return (1/Math.sqrt(2*Math.PI*sigma**2))*Math.exp(-1*(x - mu)**2/2*sigma**2);
+    },
+    calcMLE() {
+      this.type = 1;
+      this.mu = null;
+      this.sigma = null;
+      const startTime = Date.now();
+      // 最尤推定
+      const X = this.data.map(p => p[0]);
+      this.mu = math.mean(X);
+      this.sigma = Math.sqrt(X.reduce((v, x) => v + (x - this.mu)**2, 0)/X.length);
+      this.calcTime = Date.now() - startTime;
+      this.setChartdata();
     },
     calcBayesianInference() {
+      this.type = 2;
+      this.mu = null;
+      this.sigma = null;
       const startTime = Date.now();
       // ベイズ推定
       this.calcTime = Date.now() - startTime;
