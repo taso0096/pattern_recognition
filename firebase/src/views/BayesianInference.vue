@@ -105,8 +105,8 @@ export default {
       scales: {
         xAxes: [{
           ticks: {
-            min: -0.5,
-            max: 0.5,
+            min: -3,
+            max: 3,
             fontSize: 16
           }
         }],
@@ -123,7 +123,7 @@ export default {
   }),
   computed: {
     MU: () => 0,
-    SIGMA: () => 9
+    SIGMA: () => 1
   },
   methods: {
     generateData() {
@@ -141,11 +141,11 @@ export default {
       const datasets = [];
       if (this.type) {
         const inferenceData = [];
-        [...new Array(100).keys()].map(v => v/99 - 0.5).forEach(x => {
+        [...new Array(100).keys()].map(v => v*6/99 - 3).forEach(x => {
           inferenceData.push([x, this.gaussFunc(x, this.mu, this.sigma)]);
         });
         datasets.push({
-          label: this.type === 1 ? '最尤推定' : 'ガウス分布',
+          label: this.type === 1 ? '最尤推定' : 'ベイズ推定',
           type: 'line',
           fill: false,
           data: inferenceData.map(point => ({
@@ -165,7 +165,7 @@ export default {
         backgroundColor: 'hsl(0, 100%, 70%)'
       });
       const gaussData = [];
-      [...new Array(100).keys()].map(v => v/99 - 0.5).forEach(x => {
+      [...new Array(100).keys()].map(v => v*6/99 - 3).forEach(x => {
         gaussData.push([x, this.gaussFunc(x, this.MU, this.SIGMA)]);
       });
       datasets.push({
@@ -208,6 +208,16 @@ export default {
       this.sigma = null;
       const startTime = Date.now();
       // ベイズ推定
+      const X = this.data.map(p => p[0]);
+      const n = X.length;
+      const mu0 = 1 - Math.random();
+      const var0 = 1 - Math.random();
+      const muML = math.mean(X);
+      const _var = this.SIGMA**2;
+      const muN = n*var0*muML/(n*var0 + _var) + _var*mu0/(n*var0 + _var);
+      const sigmaN = Math.sqrt(1/(1/var0 + n/_var));
+      this.mu = muN;
+      this.sigma = Math.sqrt(this.SIGMA**2 + sigmaN**2);
       this.calcTime = Date.now() - startTime;
       this.setChartdata();
     }
