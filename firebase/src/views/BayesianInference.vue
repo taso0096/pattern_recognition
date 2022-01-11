@@ -19,6 +19,22 @@
         <v-row>
           <v-col>
             <v-text-field
+              v-model="epsilonMu"
+              readonly
+              label="ε_μ"
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              v-model="epsilonVar"
+              readonly
+              label="ε_(σ^2)"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-text-field
               v-model="calcTime"
               readonly
               label="処理時間（ms）"
@@ -92,6 +108,8 @@ export default {
     type: null,
     mu: null,
     sigma: null,
+    epsilonMu: null,
+    epsilonVar: null,
     chartdata: {},
     options: {
       legend: {
@@ -105,8 +123,8 @@ export default {
       scales: {
         xAxes: [{
           ticks: {
-            min: -3,
-            max: 3,
+            min: 0,
+            max: 6,
             fontSize: 16
           }
         }],
@@ -122,7 +140,7 @@ export default {
     }
   }),
   computed: {
-    MU: () => 0,
+    MU: () => 3,
     SIGMA: () => 1
   },
   methods: {
@@ -135,13 +153,15 @@ export default {
       this.type = null;
       this.mu = null;
       this.sigma = null;
+      this.epsilonMu = null;
+      this.epsilonVar = null;
       this.setChartdata();
     },
     setChartdata() {
       const datasets = [];
       if (this.type) {
         const inferenceData = [];
-        [...new Array(100).keys()].map(v => v*6/99 - 3).forEach(x => {
+        [...new Array(100).keys()].map(v => v*6/99).forEach(x => {
           inferenceData.push([x, this.gaussFunc(x, this.mu, this.sigma)]);
         });
         datasets.push({
@@ -152,9 +172,12 @@ export default {
             x: point[0],
             y: point[1]
           })),
+          pointRadius: 0,
           backgroundColor: 'hsl(180, 100%, 70%)',
           borderColor: 'hsl(180, 100%, 70%)'
         });
+        this.epsilonMu = (this.mu - this.MU)/this.MU;
+        this.epsilonVar = (this.sigma**2 - this.SIGMA**2)/this.SIGMA**2;
       }
       datasets.push({
         label: 'サンプル',
@@ -162,10 +185,11 @@ export default {
           x: point[0],
           y: point[1]
         })),
+        pointRadius: 4,
         backgroundColor: 'hsl(0, 100%, 70%)'
       });
       const gaussData = [];
-      [...new Array(100).keys()].map(v => v*6/99 - 3).forEach(x => {
+      [...new Array(100).keys()].map(v => v*6/99).forEach(x => {
         gaussData.push([x, this.gaussFunc(x, this.MU, this.SIGMA)]);
       });
       datasets.push({
@@ -176,6 +200,7 @@ export default {
           x: point[0],
           y: point[1]
         })),
+        pointRadius: 0,
         backgroundColor: 'rgba(0, 0, 0, 0)',
         borderColor: '#ddd'
       });
