@@ -128,6 +128,12 @@ export default {
         route: {
           name: 'BayesianInference'
         }
+      },
+      {
+        title: 'ベイズ線形回帰',
+        route: {
+          name: 'BaysianLinearRegression'
+        }
       }
     ]
   })

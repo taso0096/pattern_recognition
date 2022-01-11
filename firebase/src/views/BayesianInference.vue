@@ -173,7 +173,6 @@ export default {
             y: point[1]
           })),
           pointRadius: 0,
-          backgroundColor: 'hsl(180, 100%, 70%)',
           borderColor: 'hsl(180, 100%, 70%)'
         });
         this.epsilonMu = (this.mu - this.MU)/this.MU;
@@ -201,7 +200,6 @@ export default {
           y: point[1]
         })),
         pointRadius: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0)',
         borderColor: '#ddd'
       });
       this.chartdata = {

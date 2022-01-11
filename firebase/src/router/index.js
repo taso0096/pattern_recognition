@@ -9,6 +9,7 @@ import LeastSquares from '../views/LeastSquares.vue';
 import PolynomialRegression from '../views/PolynomialRegression.vue';
 import MultilayerPerceptron from '../views/MultilayerPerceptron.vue';
 import BayesianInference from '../views/BayesianInference.vue';
+import BaysianLinearRegression from '../views/BaysianLinearRegression.vue';
 
 Vue.use(VueRouter);
 
@@ -72,6 +73,14 @@ const routes = [
     component: BayesianInference,
     meta: {
       title: 'ベイズ推定'
+    }
+  },
+  {
+    path: '/baysian-linear-regression',
+    name: 'BaysianLinearRegression',
+    component: BaysianLinearRegression,
+    meta: {
+      title: 'ベイズ線形回帰'
     }
   },
   {
