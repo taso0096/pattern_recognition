@@ -190,6 +190,21 @@ export default {
         pointRadius: 4,
         backgroundColor: 'hsl(0, 100%, 70%)'
       });
+      const sinData = [];
+      [...new Array(Number(this.nodeCount) + 1).keys()].forEach(x => {
+        sinData.push([x, Math.sin(2*Math.PI*x/this.nodeCount - Math.PI)]);
+      });
+      datasets.push({
+        label: 'sin関数',
+        type: 'line',
+        fill: false,
+        data: sinData.map(point => ({
+          x: point[0],
+          y: point[1]
+        })),
+        pointRadius: 0,
+        borderColor: '#ddd'
+      });
       this.chartdata = {
         datasets
       };
