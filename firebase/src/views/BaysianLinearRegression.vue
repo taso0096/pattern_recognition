@@ -23,6 +23,16 @@
             />
           </v-col>
         </v-row>
+        <v-row no-gutters>
+          <v-col>
+            <v-switch
+              v-model="isBlank"
+              label="空白を生成する"
+              hide-details
+              inset
+            />
+          </v-col>
+        </v-row>
         <v-row>
           <v-col>
             <v-text-field
@@ -85,6 +95,7 @@ export default {
     nodeCount: 50,
     calcTime: 0,
     data: [],
+    isBlank: false,
     M: 8,
     beta: null,
     muN: null,
@@ -124,6 +135,12 @@ export default {
         const x = Math.random()*this.nodeCount/2;
         this.data.push([x, Math.sin(2*Math.PI*x/this.nodeCount - Math.PI) + (Math.random() - 0.5)/2]);
       });
+      if (!this.isBlank) {
+        [...new Array(Number(this.nodeCount)/2 - 1).keys()].forEach(() => {
+          const x = Math.random()*this.nodeCount/4 + this.nodeCount*2/4;
+          this.data.push([x, Math.sin(2*Math.PI*x/this.nodeCount - Math.PI) + (Math.random() - 0.5)/2]);
+        });
+      }
       [...new Array(Number(this.nodeCount)/2 - 1).keys()].forEach(() => {
         const x = Math.random()*this.nodeCount/4 + this.nodeCount*3/4;
         this.data.push([x, Math.sin(2*Math.PI*x/this.nodeCount - Math.PI) + (Math.random() - 0.5)/2]);
