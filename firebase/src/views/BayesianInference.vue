@@ -19,16 +19,48 @@
         <v-row>
           <v-col>
             <v-text-field
-              v-model="epsilonMu"
+              :value="MU"
               readonly
-              label="ε_μ"
+              label="μ"
             />
           </v-col>
           <v-col>
             <v-text-field
-              v-model="epsilonVar"
+              :value="SIGMA**2"
               readonly
-              label="ε_(σ^2)"
+              label="σ^2"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-text-field
+              :value="mu1"
+              readonly
+              label="最尤推定μ"
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              :value="sigma1**2"
+              readonly
+              label="最尤推定σ^2"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-text-field
+              :value="mu2"
+              readonly
+              label="ベイズ推定μ"
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              :value="sigma2**2"
+              readonly
+              label="ベイズ推定σ^2"
             />
           </v-col>
         </v-row>
@@ -52,23 +84,14 @@
           </v-col>
         </v-row>
         <v-row>
-          <v-col class="col-12 col-sm-6">
+          <v-col>
             <v-btn
               :disabled="!data.length"
               color="primary"
               depressed
               block
-              @click="calcMLE"
-            >最尤推定</v-btn>
-          </v-col>
-          <v-col class="col-12 col-sm-6">
-            <v-btn
-              :disabled="!data.length"
-              color="primary"
-              depressed
-              block
-              @click="calcBayesianInference"
-            >ベイズ推定</v-btn>
+              @click="calc"
+            >計算</v-btn>
           </v-col>
         </v-row>
       </v-card-text>
@@ -106,10 +129,10 @@ export default {
     calcTime: 0,
     data: [],
     type: null,
-    mu: null,
-    sigma: null,
-    epsilonMu: null,
-    epsilonVar: null,
+    mu1: null,
+    sigma1: null,
+    mu2: null,
+    sigma2: null,
     chartdata: {},
     options: {
       legend: {
@@ -151,32 +174,52 @@ export default {
         this.data.push([x, this.gaussFunc(x, this.MU, this.SIGMA)]);
       });
       this.type = null;
-      this.mu = null;
-      this.sigma = null;
-      this.epsilonMu = null;
-      this.epsilonVar = null;
+      this.mu1 = null;
+      this.sigma1 = null;
+      this.mu2 = null;
+      this.sigma2 = null;
       this.setChartdata();
     },
     setChartdata() {
       const datasets = [];
-      if (this.type) {
-        const inferenceData = [];
+      if (this.mu1) {
+        const inferenceData1 = [];
         [...new Array(100).keys()].map(v => v*6/99).forEach(x => {
-          inferenceData.push([x, this.gaussFunc(x, this.mu, this.sigma)]);
+          inferenceData1.push([x, this.gaussFunc(x, this.mu1, this.sigma1)]);
         });
         datasets.push({
-          label: this.type === 1 ? '最尤推定' : 'ベイズ推定',
+          label: '最尤推定',
           type: 'line',
           fill: false,
-          data: inferenceData.map(point => ({
+          data: inferenceData1.map(point => ({
+            x: point[0],
+            y: point[1]
+          })),
+          pointRadius: 0,
+          borderColor: 'hsl(90, 100%, 70%)'
+        });
+        const epsilonMu1 = (this.mu1 - this.MU)/this.MU;
+        const epsilonVar1 = (this.sigma1**2 - this.SIGMA**2)/this.SIGMA**2;
+        console.log(`最尤推定: ${epsilonMu1}, ${epsilonVar1}`);
+
+        const inferenceData2 = [];
+        [...new Array(100).keys()].map(v => v*6/99).forEach(x => {
+          inferenceData2.push([x, this.gaussFunc(x, this.mu2, this.sigma2)]);
+        });
+        datasets.push({
+          label: 'ベイズ推定',
+          type: 'line',
+          fill: false,
+          data: inferenceData2.map(point => ({
             x: point[0],
             y: point[1]
           })),
           pointRadius: 0,
           borderColor: 'hsl(180, 100%, 70%)'
         });
-        this.epsilonMu = (this.mu - this.MU)/this.MU;
-        this.epsilonVar = (this.sigma**2 - this.SIGMA**2)/this.SIGMA**2;
+        const epsilonMu2 = (this.mu2 - this.MU)/this.MU;
+        const epsilonVar2 = (this.sigma2**2 - this.SIGMA**2)/this.SIGMA**2;
+        console.log(`ベイズ推定: ${epsilonMu2}, ${epsilonVar2}`);
       }
       datasets.push({
         label: 'サンプル',
@@ -213,23 +256,20 @@ export default {
     gaussFunc(x, mu, sigma) {
       return (1/Math.sqrt(2*Math.PI*sigma**2))*Math.exp(-1*(x - mu)**2/2*sigma**2);
     },
-    calcMLE() {
-      this.type = 1;
-      this.mu = null;
-      this.sigma = null;
+    calc() {
       const startTime = Date.now();
+      this.calcMLE();
+      this.calcBayesianInference();
+      this.calcTime = Date.now() - startTime;
+    },
+    calcMLE() {
       // 最尤推定
       const X = this.data.map(p => p[0]);
-      this.mu = math.mean(X);
-      this.sigma = Math.sqrt(X.reduce((v, x) => v + (x - this.mu)**2, 0)/X.length);
-      this.calcTime = Date.now() - startTime;
+      this.mu1 = math.mean(X);
+      this.sigma1 = Math.sqrt(X.reduce((v, x) => v + (x - this.mu1)**2, 0)/X.length);
       this.setChartdata();
     },
     calcBayesianInference() {
-      this.type = 2;
-      this.mu = null;
-      this.sigma = null;
-      const startTime = Date.now();
       // ベイズ推定
       const X = this.data.map(p => p[0]);
       const n = X.length;
@@ -239,9 +279,8 @@ export default {
       const _var = this.SIGMA**2;
       const muN = n*var0*muML/(n*var0 + _var) + _var*mu0/(n*var0 + _var);
       const sigmaN = Math.sqrt(1/(1/var0 + n/_var));
-      this.mu = muN;
-      this.sigma = Math.sqrt(this.SIGMA**2 + sigmaN**2);
-      this.calcTime = Date.now() - startTime;
+      this.mu2 = muN;
+      this.sigma2 = Math.sqrt(this.SIGMA**2 + sigmaN**2);
       this.setChartdata();
     }
   }
