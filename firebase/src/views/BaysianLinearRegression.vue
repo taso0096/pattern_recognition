@@ -96,7 +96,7 @@ export default {
     calcTime: 0,
     data: [],
     isBlank: false,
-    M: 8,
+    M: 10,
     beta: null,
     muN: null,
     sigmaN: null,
@@ -165,7 +165,7 @@ export default {
           fill: false,
           data,
           pointRadius: 0,
-          borderColor: 'hsl(180, 100%, 70%)'
+          borderColor: 'hsl(120, 100%, 70%)'
         });
 
         const predUpperData = [];
@@ -187,7 +187,7 @@ export default {
           fill: false,
           data: predUpperData,
           pointRadius: 0,
-          borderColor: 'hsl(270, 100%, 70%)'
+          borderColor: 'hsl(240, 100%, 70%)'
         });
         datasets.push({
           label: '予測分布（下）',
@@ -195,7 +195,7 @@ export default {
           fill: false,
           data: predLowerData,
           pointRadius: 0,
-          borderColor: 'hsl(270, 100%, 70%)'
+          borderColor: 'hsl(240, 100%, 70%)'
         });
       }
       datasets.push({
@@ -237,7 +237,7 @@ export default {
       // ベイズ線形回帰
       const sigma0 = 1 - Math.random();
       const mu0 = 1 - Math.random();
-      this.beta = 1 - Math.random();
+      this.beta = (1 - Math.random())*this.nodeCount;
       const phiT = this.data.map(p => [...new Array(Number(this.M) + 1).keys()].reduce((row, i) => {
         row.push(this.calcPhi(p[0], i));
         return row;

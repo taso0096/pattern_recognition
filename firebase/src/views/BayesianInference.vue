@@ -196,7 +196,7 @@ export default {
             y: point[1]
           })),
           pointRadius: 0,
-          borderColor: 'hsl(90, 100%, 70%)'
+          borderColor: 'hsl(120, 100%, 70%)'
         });
         const epsilonMu1 = (this.mu1 - this.MU)/this.MU;
         const epsilonVar1 = (this.sigma1**2 - this.SIGMA**2)/this.SIGMA**2;
@@ -215,7 +215,7 @@ export default {
             y: point[1]
           })),
           pointRadius: 0,
-          borderColor: 'hsl(180, 100%, 70%)'
+          borderColor: 'hsl(240, 100%, 70%)'
         });
         const epsilonMu2 = (this.mu2 - this.MU)/this.MU;
         const epsilonVar2 = (this.sigma2**2 - this.SIGMA**2)/this.SIGMA**2;
