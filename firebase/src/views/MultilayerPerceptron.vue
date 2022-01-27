@@ -37,7 +37,7 @@
             <v-text-field
               v-model="error"
               readonly
-              label="二乗誤差"
+              label="二乗和誤差"
             />
           </v-col>
         </v-row>
@@ -66,6 +66,11 @@
       <scatter-chart
         ref="chart"
         :chartdata="chartdata"
+        :options="options"
+      />
+      <scatter-chart
+        ref="error"
+        :chartdata="errorData"
         :options="options"
       />
     </div>
@@ -99,6 +104,7 @@ export default {
     w2: null,
     error: null,
     chartdata: {},
+    errorData: {},
     options: {
       legend: {
         labels: {
@@ -150,8 +156,11 @@ export default {
           type: 'line',
           fill: false,
           data,
-          backgroundColor: '#000'
+          pointRadius: 0,
+          borderColor: '#000'
         });
+      } else {
+        this.errorData = {};
       }
       datasets.push({
         label: 'データ',
@@ -165,6 +174,7 @@ export default {
         datasets
       };
       this.$refs.chart.renderChart(this.chartdata, this.options);
+      this.$refs.error.renderChart(this.errorData, this.options);
     },
     recognize(x) {
       // 中間層
@@ -177,9 +187,26 @@ export default {
     calcError() {
       const X = this.data.map(p => [1, p[0]]);
       const T = this.data.map(p => [p[1]]);
-      return X.map((xn, n) => [xn, n])
-        .reduce((eSum, [xn, n]) => eSum + this.recognize(xn).Y.map((yk, k) => [yk, k])
-          .reduce((e, [yk, k]) => e + ((yk - T[n][k])**2)/2, 0), 0);
+      const data = [];
+      const e = X.map((xn, n) => [xn, n])
+        .reduce((eSum, [xn, n]) => {
+          const en = this.recognize(xn).Y.map((yk, k) => [yk, k]).reduce((e, [yk, k]) => e + ((yk - T[n][k])**2)/2, 0);
+          data.push({ x: xn[1], y: en });
+          return eSum + en;
+        }, 0);
+      this.errorData = {
+        datasets: [
+          {
+            label: '二乗誤差関数',
+            type: 'line',
+            fill: false,
+            data,
+            pointRadius: 0,
+            borderColor: '#000'
+          }
+        ]
+      };
+      return e;
     },
     calcMultilayerPerceptron() {
       const startTime = Date.now();
