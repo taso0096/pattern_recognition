@@ -71,7 +71,7 @@
       <scatter-chart
         ref="error"
         :chartdata="errorData"
-        :options="options"
+        :options="errorOptions"
       />
     </div>
   </div>
@@ -129,6 +129,32 @@ export default {
       animation: {
         duration: 0
       }
+    },
+    errorOptions: {
+      legend: {
+        labels: {
+          fontSize: 16
+        }
+      },
+      tooltips: {
+        bodyFontSize: 16
+      },
+      scales: {
+        xAxes: [{
+          ticks: {
+            fontSize: 16
+          }
+        }],
+        yAxes: [{
+          ticks: {
+            max: 1,
+            fontSize: 16
+          }
+        }]
+      },
+      animation: {
+        duration: 0
+      }
     }
   }),
   methods: {
@@ -170,11 +196,23 @@ export default {
         })),
         backgroundColor: 'hsl(0, 100%, 70%)'
       });
+      const sinData = [];
+      [...new Array(Number(this.nodeCount)).keys()].map(v => ++v).forEach(i => {
+        sinData.push({ x: i/this.nodeCount, y: Math.sin(2*Math.PI*i/this.nodeCount - Math.PI) });
+      });
+      datasets.push({
+        label: 'sin関数',
+        type: 'line',
+        fill: false,
+        data: sinData,
+        pointRadius: 0,
+        borderColor: '#ddd'
+      });
       this.chartdata = {
         datasets
       };
       this.$refs.chart.renderChart(this.chartdata, this.options);
-      this.$refs.error.renderChart(this.errorData, this.options);
+      this.$refs.error.renderChart(this.errorData, this.errorOptions);
     },
     recognize(x) {
       // 中間層
