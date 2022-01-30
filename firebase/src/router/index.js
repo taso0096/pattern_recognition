@@ -10,6 +10,7 @@ import PolynomialRegression from '../views/PolynomialRegression.vue';
 import MultilayerPerceptron from '../views/MultilayerPerceptron.vue';
 import BayesianInference from '../views/BayesianInference.vue';
 import BaysianLinearRegression from '../views/BaysianLinearRegression.vue';
+import TemporalDifferenceLearning from '../views/TemporalDifferenceLearning.vue';
 
 Vue.use(VueRouter);
 
@@ -81,6 +82,14 @@ const routes = [
     component: BaysianLinearRegression,
     meta: {
       title: 'ベイズ線形回帰'
+    }
+  },
+  {
+    path: '/temporal-difference-learning',
+    name: 'TemporalDifferenceLearning',
+    component: TemporalDifferenceLearning,
+    meta: {
+      title: 'TD学習'
     }
   },
   {

@@ -134,6 +134,12 @@ export default {
         route: {
           name: 'BaysianLinearRegression'
         }
+      },
+      {
+        title: 'TD学習',
+        route: {
+          name: 'TemporalDifferenceLearning'
+        }
       }
     ]
   })
