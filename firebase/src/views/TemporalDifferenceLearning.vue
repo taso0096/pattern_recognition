@@ -10,6 +10,58 @@
         <v-row>
           <v-col>
             <v-text-field
+              v-model="learnCount"
+              number
+              label="学習回数"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model="alpha"
+              number
+              label="学習率α"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model="gamma"
+              number
+              label="割引率γ"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model="epsilon"
+              number
+              label="ε"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-text-field
+              v-model="reward.goal"
+              number
+              label="ゴール報酬"
+            />
+          </v-col>
+          <v-col>
+            <v-text-field
+              v-model="reward.road"
+              number
+              label="その他報酬"
+            />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-text-field
               v-model="calcTime"
               readonly
               label="処理時間（ms）"
@@ -52,7 +104,7 @@
             :key="j"
           >
             <v-sheet
-              :color="getMapColor(col)"
+              :color="getMapColor(col, route[i][j])"
               elevation="1"
               height="50"
               width="50"
@@ -80,7 +132,7 @@ export default {
     alpha: 0.2,
     epsilon: 0.1,
     gamma: 0.99,
-    learnCount: 10000,
+    learnCount: 20,
     map: [
       [0, 0, 1, 0, 3],
       [0, 1, 1, 0, 1],
@@ -89,6 +141,7 @@ export default {
       [2, 0, 0, 0, 0]
     ],
     V: [...new Array(5)].map(() => [...new Array(5)].map(() => 0)),
+    route: [...new Array(5)].map(() => [...new Array(5)].map(() => 0)),
     reward: {
       road: 0,
       goal: 100
@@ -98,7 +151,10 @@ export default {
     mapLength: () => 5
   },
   methods: {
-    getMapColor(label) {
+    getMapColor(label, routeState) {
+      if (routeState) {
+        return 'green';
+      }
       switch (label) {
         case 0:
           return 'grey';
@@ -112,25 +168,29 @@ export default {
     },
     reset() {
       this.V = [...new Array(this.mapLength)].map(() => [...new Array(this.mapLength)].map(() => 0));
+      this.route = [...new Array(this.mapLength)].map(() => [...new Array(this.mapLength)].map(() => 0));
+      this.calcTime = 0;
     },
-    getActions(p) {
+    getAction(p) {
       const actions = []
       if (this.map[p[1] - 1] && [0, 2, 3].includes(this.map[p[1] - 1][p[0]])) {
-        actions.push('up');
+        actions.push(['up', this.V[p[1] - 1][p[0]]]);
       }
       if ([0, 2, 3].includes(this.map[p[1]][p[0] + 1])) {
-        actions.push('right');
+        actions.push(['right', this.V[p[1]][p[0] + 1]]);
       }
       if (this.map[p[1] + 1] && [0, 2, 3].includes(this.map[p[1] + 1][p[0]])) {
-        actions.push('down');
+        actions.push(['down', this.V[p[1] + 1][p[0]]]);
       }
       if ([0, 2, 3].includes(this.map[p[1]][p[0] - 1])) {
-        actions.push('left');
+        actions.push(['left', this.V[p[1]][p[0] - 1]]);
       }
-      return actions;
+      if (Math.random() <= this.epsilon) {
+        return actions[Math.floor(Math.random()*actions.length)][0];
+      }
+      return actions.sort((a, b) => b[1] - a[1])[0][0];
     },
-    move(p, actions) {
-      const action = actions[Math.floor(Math.random()*actions.length)];
+    move(p, action) {
       switch (action) {
         case 'up':
           p[1]--;
@@ -146,20 +206,34 @@ export default {
           break;
       }
       if ([0, 2].includes(this.map[p[1]][p[0]])) {
-        return this.reward.road;
+        return Number(this.reward.road);
       }
-      return this.reward.goal;
+      return Number(this.reward.goal);
+    },
+    searchPath() {
+      const p = [0, this.mapLength - 1];
+      let count = 0;
+      while (++count) {
+        const action = this.getAction(p);
+        this.move(p, action);
+        if (count > this.mapLength**2 || (p[0] === this.mapLength - 1 && p[1] === 0)) {
+          break;
+        }
+        this.route[p[1]][p[0]] = 1;
+      }
     },
     calcTemporalDifferenceLearning() {
+      this.reset();
       const startTime = Date.now();
       // TD学習
-      const position = [0, this.mapLength - 1];
-      [...new Array(this.learnCount)].forEach(() => {
-        const beforeP = [...position];
-        const actions = this.getActions(position);
-        const reward = this.move(position, actions);
-        this.V[beforeP[1]][beforeP[0]] += this.alpha*(reward + this.gamma*this.V[position[1]][position[0]] - this.V[beforeP[1]][beforeP[0]]);
+      const p = [0, this.mapLength - 1];
+      [...new Array(Number(this.learnCount))].forEach(() => {
+        const beforeP = [...p];
+        const action = this.getAction(p);
+        const reward = this.move(p, action);
+        this.V[beforeP[1]][beforeP[0]] += this.alpha*(reward + this.gamma*this.V[p[1]][p[0]] - this.V[beforeP[1]][beforeP[0]]);
       });
+      this.searchPath();
       this.calcTime = Date.now() - startTime;
     }
   }
